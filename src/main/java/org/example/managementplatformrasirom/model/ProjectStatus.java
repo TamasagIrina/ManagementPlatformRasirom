@@ -1,4 +1,7 @@
 package org.example.managementplatformrasirom.model;
 
-public record ProjectStatus() {
+public enum ProjectStatus {
+    ACTIVE,
+    COMPLETED,
+    ON_HOLD
 }

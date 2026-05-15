@@ -1,4 +1,6 @@
 package org.example.managementplatformrasirom.model;
 
-public class Role {
+public enum Role {
+    ADMIN,
+    USER
 }
