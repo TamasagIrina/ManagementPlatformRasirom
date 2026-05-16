@@ -6,6 +6,7 @@ import org.example.managementplatformrasirom.security.JwtAuthFilter;
 import org.example.managementplatformrasirom.security.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -34,6 +35,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // USER endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
+
+                        // ADMIN endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/users/get/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/roles").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/deactivate").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole("ADMIN")
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

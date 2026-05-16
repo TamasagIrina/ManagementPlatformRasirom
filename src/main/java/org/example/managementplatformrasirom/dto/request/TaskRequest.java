@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.example.managementplatformrasirom.model.TaskPriority;
+import org.example.managementplatformrasirom.model.TaskStatus;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +17,8 @@ public class TaskRequest {
 
     @NotNull(message = "Priority is required")
     private TaskPriority priority;
+
+    private TaskStatus status;
 
     private LocalDateTime deadline;
 
