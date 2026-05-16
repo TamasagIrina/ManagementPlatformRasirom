@@ -39,13 +39,19 @@ public class SecurityConfig {
                         // USER endpoints
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
-
-                        // ADMIN endpoints
                         .requestMatchers(HttpMethod.GET, "/api/users/get/all").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/roles").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/deactivate").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole("ADMIN")
 
+                        // PROJECT endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/projects/my").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/projects/create").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/projects/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/projects/*/update").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/projects/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/projects/*/delete").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/projects/*/members/*/add").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
