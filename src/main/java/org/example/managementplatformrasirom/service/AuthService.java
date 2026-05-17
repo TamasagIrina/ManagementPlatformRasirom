@@ -32,6 +32,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
 
+    private final AuditService auditService;
+
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     public AuthResponse register(RegisterRequest request) {
@@ -53,6 +55,7 @@ public class AuthService {
         String token = jwtService.generateToken(userDetails);
 
         log.info("REGISTER SUCCESS: user '{}'", request.getEmail());
+        auditService.log("REGISTER", request.getEmail(), "USER", null, "Register successful");
 
         return new AuthResponse(token, user.getEmail(), user.getFirstName());
     }
@@ -72,6 +75,7 @@ public class AuthService {
                 .orElseThrow(() ->  new BusinessException("User not found", HttpStatus.NOT_FOUND));
 
         log.info("LOGIN SUCCESS: user '{}'", request.getEmail());
+        auditService.log("LOGIN", request.getEmail(), "USER", null, "Login successful");
 
         return new AuthResponse(token, user.getEmail(), user.getFirstName());
     }

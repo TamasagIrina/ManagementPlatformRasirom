@@ -26,6 +26,7 @@ public class TaskService {
     private final ProjectRepository projectRepository;
 
     private static final Logger log = LoggerFactory.getLogger(TaskService.class);
+    private final AuditService auditService;
 
     public TaskResponse createTask(TaskRequest request, String creatorEmail) {
         User creator = userRepository.findByEmail(creatorEmail)
@@ -115,6 +116,7 @@ public class TaskService {
         taskRepository.save(task);
 
         log.info("UPDATED TASK STATUS: task '{}' with id '{}'", task.getTitle(), id);
+        auditService.log("UPDATE_TASK_STATUS", "SYSTEM", "TASK", id, "Task status changed to: " + status);
 
         return mapToResponse(task);
     }
@@ -142,7 +144,9 @@ public class TaskService {
 
         taskRepository.save(task);
 
+
         log.info("UPDATED TASK: task '{}' with id '{}'", task.getTitle(), id);
+        auditService.log("UPDATE_TASK", "SYSTEM", "TASK", id, "Task updated: " + task.getTitle());
 
         return mapToResponse(task);
     }
@@ -153,6 +157,7 @@ public class TaskService {
         task.setDeleted(true);
 
         log.info("DELETE TASK: task '{}' with id '{}'", task.getTitle(), id);
+        auditService.log("DELETE_TASK", "ADMIN", "TASK", id, "Task deleted: " + task.getTitle());
 
         taskRepository.save(task);
     }

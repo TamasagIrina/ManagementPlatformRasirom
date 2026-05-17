@@ -26,6 +26,7 @@ public class ProjectService {
     private final UserRepository userRepository;
 
     private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
+    private final AuditService auditService;
 
     public ProjectResponse createProject(ProjectRequest request, String ownerEmail) {
         User owner = userRepository.findByEmail(ownerEmail)
@@ -71,6 +72,7 @@ public class ProjectService {
         projectRepository.save(project);
 
         log.info("UPDATED PROJECT: project '{}' with id '{}'", project.getName(), id);
+        auditService.log("UPDATE_PROJECT", "ADMIN", "PROJECT", id, "Project updated: " + project.getName());
 
         return mapToResponse(project);
     }
@@ -82,6 +84,7 @@ public class ProjectService {
         projectRepository.save(project);
 
         log.info("UPDATED STATUS PROJECT: project '{}' with id '{}'", project.getName(), id);
+        auditService.log("UPDATE_PROJECT_STATUS", "ADMIN", "PROJECT", id, "Project status changed to: " + status);
 
         return mapToResponse(project);
     }
@@ -110,6 +113,7 @@ public class ProjectService {
         project.setDeleted(true);
 
         log.info("DELETE PROJECT: project '{}' with id '{}'", project.getName(), id);
+        auditService.log("DELETE_PROJECT", "ADMIN", "PROJECT", id, "Project deleted: " + project.getName());
 
         projectRepository.save(project);
     }

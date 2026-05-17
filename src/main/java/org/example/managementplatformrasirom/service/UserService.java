@@ -24,6 +24,8 @@ public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
+    private final AuditService auditService;
+
     public UserResponse getProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
@@ -38,8 +40,6 @@ public class UserService {
         user.setLastName(request.getLastName());
 
         userRepository.save(user);
-
-        log.info("USER UPDATED: user EMAIL '{}'", email);
 
         return mapToResponse(user);
     }
@@ -58,6 +58,7 @@ public class UserService {
         userRepository.save(user);
 
         log.info("ROLE CHANGE: user id '{}' roles changed to '{}'", userId, roles);
+        auditService.log("UPDATE_ROLES", "ADMIN", "USER", userId, "Roles changed to: " + roles);
 
         return mapToResponse(user);
     }
@@ -68,6 +69,7 @@ public class UserService {
         user.setActive(false);
 
         log.info("USER DEACTIVATED: user id '{}'", userId);
+        auditService.log("DEACTIVATE_USER", "ADMIN", "USER", userId, "User deactivated");
 
         userRepository.save(user);
     }
@@ -78,6 +80,7 @@ public class UserService {
         user.setActive(true);
 
         log.info("USER ACTIVATED: user id '{}'", userId);
+        auditService.log("ACTIVATE_USER", "ADMIN", "USER", userId, "User activated");
 
         userRepository.save(user);
     }
