@@ -4,6 +4,7 @@ package org.example.managementplatformrasirom.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.managementplatformrasirom.dto.request.RegisterRequest;
+import org.example.managementplatformrasirom.dto.response.ApiResponse;
 import org.example.managementplatformrasirom.dto.response.UserResponse;
 import org.example.managementplatformrasirom.model.Role;
 import org.example.managementplatformrasirom.service.UserService;
@@ -22,43 +23,41 @@ public class UserController {
 
     private final UserService userService;
 
-    // USER endpoints
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getProfile(
+    public ResponseEntity<ApiResponse<UserResponse>> getProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(userService.getProfile(userDetails.getUsername()));
+        return ResponseEntity.ok(ApiResponse.success(userService.getProfile(userDetails.getUsername())));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserResponse> updateProfile(
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(userService.updateProfile(userDetails.getUsername(), request));
+        return ResponseEntity.ok(ApiResponse.success(userService.updateProfile(userDetails.getUsername(), request)));
     }
 
-    // ADMIN endpoints
     @GetMapping("get/all")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        return ResponseEntity.ok(ApiResponse.success(userService.getAllUsers()));
     }
 
     @PutMapping("/{id}/roles")
-    public ResponseEntity<UserResponse> updateRoles(
+    public ResponseEntity<ApiResponse<UserResponse>> updateRoles(
             @PathVariable Long id,
             @RequestBody Set<Role> roles) {
-        return ResponseEntity.ok(userService.updateRoles(id, roles));
+        return ResponseEntity.ok(ApiResponse.success(userService.updateRoles(id, roles)));
     }
 
     @PutMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivateUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deactivateUser(@PathVariable Long id) {
         userService.deactivateUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PutMapping("/{id}/activate")
-    public ResponseEntity<Void> activateUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable Long id) {
         userService.activateUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
 }

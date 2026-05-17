@@ -3,6 +3,7 @@ package org.example.managementplatformrasirom.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.managementplatformrasirom.dto.request.TaskRequest;
+import org.example.managementplatformrasirom.dto.response.ApiResponse;
 import org.example.managementplatformrasirom.dto.response.TaskResponse;
 import org.example.managementplatformrasirom.model.TaskPriority;
 import org.example.managementplatformrasirom.model.TaskStatus;
@@ -23,60 +24,60 @@ public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("/create")
-    public ResponseEntity<TaskResponse> createTask(
+    public ResponseEntity<ApiResponse<TaskResponse>> createTask(
             @Valid @RequestBody TaskRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(taskService.createTask(request, userDetails.getUsername()));
+                .body(ApiResponse.created(taskService.createTask(request, userDetails.getUsername())));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<TaskResponse>> getAllTasks() {
-        return ResponseEntity.ok(taskService.getAllTasks());
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getAllTasks() {
+        return ResponseEntity.ok(ApiResponse.success(taskService.getAllTasks()));
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<TaskResponse>> getMyTasks(
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getMyTasks(
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(taskService.getMyTasks(userDetails.getUsername()));
+        return ResponseEntity.ok(ApiResponse.success(taskService.getMyTasks(userDetails.getUsername())));
     }
 
     @GetMapping("/filter/status")
-    public ResponseEntity<List<TaskResponse>> getByStatus(
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getByStatus(
             @RequestParam TaskStatus status) {
-        return ResponseEntity.ok(taskService.getTasksByStatus(status));
+        return ResponseEntity.ok(ApiResponse.success(taskService.getTasksByStatus(status)));
     }
 
     @GetMapping("/filter/priority")
-    public ResponseEntity<List<TaskResponse>> getByPriority(
+    public ResponseEntity<ApiResponse<List<TaskResponse>>> getByPriority(
             @RequestParam TaskPriority priority) {
-        return ResponseEntity.ok(taskService.getTasksByPriority(priority));
+        return ResponseEntity.ok(ApiResponse.success(taskService.getTasksByPriority(priority)));
     }
 
     @PutMapping("/{id}/update")
-    public ResponseEntity<TaskResponse> updateTask(
+    public ResponseEntity<ApiResponse<TaskResponse>> updateTask(
             @PathVariable Long id,
             @Valid @RequestBody TaskRequest request) {
-        return ResponseEntity.ok(taskService.updateTask(id, request));
+        return ResponseEntity.ok(ApiResponse.success(taskService.updateTask(id, request)));
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<TaskResponse> updateStatus(
+    public ResponseEntity<ApiResponse<TaskResponse>> updateStatus(
             @PathVariable Long id,
             @RequestParam TaskStatus status) {
-        return ResponseEntity.ok(taskService.updateStatus(id, status));
+        return ResponseEntity.ok(ApiResponse.success(taskService.updateStatus(id, status)));
     }
 
     @PatchMapping("/{id}/assign/{userId}")
-    public ResponseEntity<TaskResponse> assignTask(
+    public ResponseEntity<ApiResponse<TaskResponse>> assignTask(
             @PathVariable Long id,
             @PathVariable Long userId) {
-        return ResponseEntity.ok(taskService.assignTask(id, userId));
+        return ResponseEntity.ok(ApiResponse.success(taskService.assignTask(id, userId)));
     }
 
     @DeleteMapping("/{id}/delete")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

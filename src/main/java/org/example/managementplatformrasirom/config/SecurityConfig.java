@@ -53,6 +53,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/projects/*/delete").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/projects/*/members/*/add").hasRole("ADMIN")
 
+                        // TASK endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/tasks/create").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/tasks/all").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/tasks/my").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/tasks/filter/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/tasks/*/update").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/tasks/*/status").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/tasks/*/assign/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/tasks/*/delete").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
