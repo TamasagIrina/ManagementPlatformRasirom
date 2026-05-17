@@ -3,10 +3,14 @@ package org.example.managementplatformrasirom.service;
 import lombok.RequiredArgsConstructor;
 import org.example.managementplatformrasirom.dto.request.TaskRequest;
 import org.example.managementplatformrasirom.dto.response.TaskResponse;
+import org.example.managementplatformrasirom.exception.BusinessException;
 import org.example.managementplatformrasirom.model.*;
 import org.example.managementplatformrasirom.repository.ProjectRepository;
 import org.example.managementplatformrasirom.repository.TaskRepository;
 import org.example.managementplatformrasirom.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,11 +25,13 @@ public class TaskService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
 
+    private static final Logger log = LoggerFactory.getLogger(TaskService.class);
+
     public TaskResponse createTask(TaskRequest request, String creatorEmail) {
         User creator = userRepository.findByEmail(creatorEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new BusinessException("Project not found", HttpStatus.NOT_FOUND));
 
         Task task = new Task();
         task.setTitle(request.getTitle());
@@ -44,7 +50,7 @@ public class TaskService {
             boolean assignedIsMember = project.getMembers().contains(assignedTo);
 
             if (!assignedIsOwner && !assignedIsMember) {
-                throw new RuntimeException("Assigned user is not a member of this project");
+                throw new BusinessException("Assigned user is not a member of this project", HttpStatus.BAD_REQUEST);
             }
 
             task.setAssignedTo(assignedTo);
@@ -56,15 +62,15 @@ public class TaskService {
 
     public TaskResponse assignTask(Long id, Long userId) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new BusinessException("Task not found", HttpStatus.NOT_FOUND));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         Project project = task.getProject();
 
         boolean isOwner = project.getOwner().getId().equals(user.getId());
         boolean isMember = project.getMembers().contains(user);
         if (!isOwner && !isMember) {
-            throw new RuntimeException("User is not a member of this project");
+            throw new BusinessException("User is not a member of this project", HttpStatus.BAD_REQUEST);
         }
 
         task.setAssignedTo(user);
@@ -95,7 +101,7 @@ public class TaskService {
 
     public List<TaskResponse> getMyTasks(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         return taskRepository.findByAssignedToIdAndDeletedFalse(user.getId())
                 .stream()
                 .map(this::mapToResponse)
@@ -104,9 +110,12 @@ public class TaskService {
 
     public TaskResponse updateStatus(Long id, TaskStatus status) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new BusinessException("Task not found", HttpStatus.NOT_FOUND));
         task.setStatus(status);
         taskRepository.save(task);
+
+        log.info("UPDATED TASK STATUS: task '{}' with id '{}'", task.getTitle(), id);
+
         return mapToResponse(task);
     }
 
@@ -114,7 +123,7 @@ public class TaskService {
 
     public TaskResponse updateTask(Long id, TaskRequest request) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new BusinessException("Task not found", HttpStatus.NOT_FOUND));
 
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
@@ -127,18 +136,24 @@ public class TaskService {
 
         if (request.getAssignedToId() != null) {
             User assignedTo = userRepository.findById(request.getAssignedToId())
-                    .orElseThrow(() -> new RuntimeException("Assigned user not found"));
+                    .orElseThrow(() -> new BusinessException("Assigned user not found", HttpStatus.NOT_FOUND));
             task.setAssignedTo(assignedTo);
         }
 
         taskRepository.save(task);
+
+        log.info("UPDATED TASK: task '{}' with id '{}'", task.getTitle(), id);
+
         return mapToResponse(task);
     }
 
     public void deleteTask(Long id) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new BusinessException("Task not found", HttpStatus.NOT_FOUND));
         task.setDeleted(true);
+
+        log.info("DELETE TASK: task '{}' with id '{}'", task.getTitle(), id);
+
         taskRepository.save(task);
     }
 

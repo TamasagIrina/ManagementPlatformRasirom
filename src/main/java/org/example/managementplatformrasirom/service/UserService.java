@@ -3,8 +3,12 @@ package org.example.managementplatformrasirom.service;
 import lombok.RequiredArgsConstructor;
 import org.example.managementplatformrasirom.dto.request.RegisterRequest;
 import org.example.managementplatformrasirom.dto.response.UserResponse;
+import org.example.managementplatformrasirom.exception.BusinessException;
 import org.example.managementplatformrasirom.model.User;
 import org.example.managementplatformrasirom.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.example.managementplatformrasirom.model.Role;
 
@@ -18,20 +22,25 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
     public UserResponse getProfile(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         return mapToResponse(user);
     }
 
     public UserResponse updateProfile(String email, RegisterRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
 
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
 
         userRepository.save(user);
+
+        log.info("USER UPDATED: user EMAIL '{}'", email);
+
         return mapToResponse(user);
     }
 
@@ -44,23 +53,32 @@ public class UserService {
 
     public UserResponse updateRoles(Long userId, Set<Role> roles) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         user.setRoles(roles);
         userRepository.save(user);
+
+        log.info("ROLE CHANGE: user id '{}' roles changed to '{}'", userId, roles);
+
         return mapToResponse(user);
     }
 
     public void deactivateUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         user.setActive(false);
+
+        log.info("USER DEACTIVATED: user id '{}'", userId);
+
         userRepository.save(user);
     }
 
     public void activateUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         user.setActive(true);
+
+        log.info("USER ACTIVATED: user id '{}'", userId);
+
         userRepository.save(user);
     }
 

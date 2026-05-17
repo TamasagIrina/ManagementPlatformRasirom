@@ -1,14 +1,19 @@
 package org.example.managementplatformrasirom.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.managementplatformrasirom.dto.request.ProjectRequest;
 import org.example.managementplatformrasirom.dto.response.ProjectResponse;
 import org.example.managementplatformrasirom.dto.response.UserResponse;
+import org.example.managementplatformrasirom.exception.BusinessException;
 import org.example.managementplatformrasirom.model.Project;
 import org.example.managementplatformrasirom.model.ProjectStatus;
 import org.example.managementplatformrasirom.model.User;
 import org.example.managementplatformrasirom.repository.ProjectRepository;
 import org.example.managementplatformrasirom.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,9 +25,11 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
 
+    private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
+
     public ProjectResponse createProject(ProjectRequest request, String ownerEmail) {
         User owner = userRepository.findByEmail(ownerEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
 
         Project project = new Project();
         project.setName(request.getName());
@@ -43,7 +50,7 @@ public class ProjectService {
 
     public List<ProjectResponse> getMyProjects(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
         return projectRepository.findByMembersIdAndDeletedFalse(user.getId())
                 .stream()
                 .map(this::mapToResponse)
@@ -52,7 +59,7 @@ public class ProjectService {
 
     public ProjectResponse updateProject(Long id, ProjectRequest request) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new BusinessException("Project not found", HttpStatus.NOT_FOUND));
 
         project.setName(request.getName());
         project.setDescription(request.getDescription());
@@ -62,22 +69,36 @@ public class ProjectService {
         }
 
         projectRepository.save(project);
+
+        log.info("UPDATED PROJECT: project '{}' with id '{}'", project.getName(), id);
+
         return mapToResponse(project);
     }
 
     public ProjectResponse updateStatus(Long id, ProjectStatus status) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new BusinessException("Project not found", HttpStatus.NOT_FOUND));
         project.setStatus(status);
         projectRepository.save(project);
+
+        log.info("UPDATED STATUS PROJECT: project '{}' with id '{}'", project.getName(), id);
+
         return mapToResponse(project);
     }
 
+    @Transactional
     public void addMember(Long projectId, Long userId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new BusinessException("Project not found", HttpStatus.NOT_FOUND));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException("User not found", HttpStatus.NOT_FOUND));
+
+        boolean alreadyMember = project.getMembers().stream()
+                .anyMatch(member -> member.getId().equals(userId));
+
+        if (alreadyMember) {
+            throw new BusinessException("User is already a member of this project", HttpStatus.CONFLICT);
+        }
 
         project.getMembers().add(user);
         projectRepository.save(project);
@@ -85,8 +106,11 @@ public class ProjectService {
 
     public void deleteProject(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new BusinessException("Project not found", HttpStatus.NOT_FOUND));
         project.setDeleted(true);
+
+        log.info("DELETE PROJECT: project '{}' with id '{}'", project.getName(), id);
+
         projectRepository.save(project);
     }
 
